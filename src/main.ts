@@ -1,33 +1,63 @@
-import './style.css'
-import typescriptLogo from './typescript.svg'
-import viteLogo from '/vite.svg'
+import "./style.css";
 
-document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="${viteLogo}" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://www.typescriptlang.org/" target="_blank">
-      <img src="${typescriptLogo}" class="logo vanilla" alt="TypeScript logo" />
-    </a>
-    <h1>Vite + TypeScript</h1>
-    <div class="card">
-      <button id="counter" type="button"></button>
-    </div>
-    <p class="read-the-docs">
-      Click on the Vite and TypeScript logos to learn more
-    </p>
-  </div>
-`
+document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
+<div class="h-full grid items-center justify-center">
+  <canvas width="800" height="600" class="bg-black" js-id="canvas">
+  </canvas>
+</div>
+`;
 
-setupCounter(document.querySelector<HTMLButtonElement>('#counter')!)
+const canvas = document.querySelector<HTMLCanvasElement>("[js-id='canvas']")!;
+const painter: CanvasRenderingContext2D = canvas.getContext("2d")!;
 
-function setupCounter(element: HTMLButtonElement) {
-  let counter = 0
-  const setCounter = (count: number) => {
-    counter = count
-    element.innerHTML = `count is ${counter}`
-  }
-  element.addEventListener('click', () => setCounter(counter + 1))
-  setCounter(0)
+painter.fillStyle = "blue";
+painter.fillRect(10, 10, 100, 100);
+
+painter.strokeStyle = "red";
+painter.lineWidth = 1;
+painter.strokeRect(5, 5, 290, 140);
+
+canvas.addEventListener("click", () => {
+    console.log(canvas.getBoundingClientRect());
+});
+
+interface FpsContext {
+    interval: number;
+    lastTime: DOMHighResTimeStamp;
+    frameCounter: number;
 }
+
+interface GameContext {
+    fps: FpsContext;
+}
+
+function reportFps(ctx: FpsContext, currentTime: DOMHighResTimeStamp) {
+    if (currentTime - ctx.lastTime > ctx.interval) {
+        const fps = ctx.frameCounter / (ctx.interval / 1000);
+        console.log(`FPS: ${fps}`);
+        ctx.frameCounter = 0;
+        ctx.lastTime = currentTime;
+    }
+}
+
+const ctx: GameContext = {
+    fps: {
+        lastTime: 0,
+        frameCounter: 0,
+        interval: 500,
+    },
+};
+
+function render(time: DOMHighResTimeStamp) {
+    painter.clearRect(0, 0, canvas.width, canvas.height);
+
+    painter.fillStyle = "blue";
+    painter.fillRect(100, 100, 50, 50);
+
+    reportFps(ctx.fps, time);
+
+    ctx.fps.frameCounter++;
+    requestAnimationFrame(render);
+}
+
+requestAnimationFrame(render);
