@@ -6,7 +6,17 @@ import {
     whiteTileColor,
 } from "./data";
 import { areVecsEqual, Vec2 } from "./utils";
-import { GameContext, GameObject, getPossibleMoves, Piece, Tile } from "./game";
+import { GameContext, GameObject, getPossibleMoves, Piece } from "./game";
+
+export interface Tile {
+    boardPos: Vec2;
+    renderPos: Vec2;
+    color: string;
+    opacity: number;
+    object: GameObject;
+    defaultColor: string;
+    defaultOpacity: number;
+}
 
 interface FpsContext {
     reportInterval: number;
@@ -28,6 +38,7 @@ interface AppContext {
     fps: FpsContext;
     game: GameContext;
     //
+    tiles: Tile[];
     //
     images: Record<string, HTMLImageElement>;
     draggedPiece?: Piece;
@@ -151,7 +162,7 @@ function render(
 
             const possibleMoves = getPossibleMoves(ctx.draggedPiece, ctx.game);
             possibleMoves.forEach((pos) => {
-                const tile = ctx.game.tiles.find((tile) =>
+                const tile = ctx.tiles.find((tile) =>
                     areVecsEqual(tile.boardPos, pos),
                 );
                 if (tile) {
@@ -172,7 +183,7 @@ function render(
         });
 
         // Reset tiles highlight
-        ctx.game.tiles.forEach((tile) => {
+        ctx.tiles.forEach((tile) => {
             tile.color = tile.defaultColor;
             tile.opacity = tile.defaultOpacity;
         });
@@ -195,7 +206,7 @@ function render(
     painter.clearRect(0, 0, canvas.width, canvas.height);
 
     // DRAW BOARD
-    ctx.game.tiles.forEach((tile) => {
+    ctx.tiles.forEach((tile) => {
         painter.fillStyle = tile.color;
         painter.globalAlpha = tile.opacity;
         painter.fillRect(
@@ -290,8 +301,8 @@ function init() {
         game: {
             boardSize,
             pieces,
-            tiles,
         },
+        tiles,
         images: loadImages(),
     };
 

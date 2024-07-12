@@ -1,19 +1,8 @@
-import { Vec2, areVecsEqual } from "./utils";
+import { Vec2, addVecs, areVecsEqual, scaleVec } from "./utils";
 
 export interface GameContext {
     boardSize: Vec2;
     pieces: Piece[];
-    tiles: Tile[];
-}
-
-export interface Tile {
-    boardPos: Vec2;
-    renderPos: Vec2;
-    color: string;
-    opacity: number;
-    object: GameObject;
-    defaultColor: string;
-    defaultOpacity: number;
 }
 
 export interface Piece {
@@ -27,6 +16,15 @@ export interface Piece {
 export interface GameObject {
     pos: Vec2;
     size: Vec2;
+}
+
+export function mkPiece(pos: Vec2, type: string, color: string): Piece {
+    return {
+        pos,
+        type,
+        color,
+        hasMoved: false,
+    };
 }
 
 export function getPossibleMoves(piece: Piece, ctx: GameContext): Vec2[] {
@@ -85,6 +83,39 @@ export function getPossibleMoves(piece: Piece, ctx: GameContext): Vec2[] {
             }
 
             moves.push(p);
+        });
+    }
+
+    if (piece.type == "bishop") {
+        const startPos = piece.pos;
+        const directions: Vec2[] = [
+            { x: -1, y: -1 },
+            { x: 1, y: -1 },
+            { x: -1, y: 1 },
+            { x: 1, y: 1 },
+        ];
+
+        directions.forEach((direction) => {
+            let currentPos = piece.pos;
+            for (;;) {
+                currentPos = addVecs(currentPos, direction);
+
+                if (!isOnBoard(currentPos)) {
+                    break;
+                }
+
+                const otherPiece = pieceOn(currentPos);
+                if (otherPiece) {
+                    if (otherPiece.color == piece.color) {
+                        break;
+                    }
+
+                    moves.push(currentPos);
+                    break;
+                }
+
+                moves.push(currentPos);
+            }
         });
     }
 

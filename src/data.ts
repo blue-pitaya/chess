@@ -1,21 +1,11 @@
-import { Piece } from "./game";
-import { Vec2 } from "./utils";
+import { mkPiece, Piece } from "./game";
 
 export const blackTileColor = "#b58863";
 export const whiteTileColor = "#f0d9b5";
 export const highlightColor = "#623b69";
 
-const white = "white";
-const black = "black";
-
-function mkPiece(pos: Vec2, type: string, color: string): Piece {
-    return {
-        pos,
-        type,
-        color,
-        hasMoved: false,
-    };
-}
+export const white = "white";
+export const black = "black";
 
 export const basicBoard: Piece[] = [
     mkPiece({ x: 0, y: 0 }, "rook", white),
