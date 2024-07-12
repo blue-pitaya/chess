@@ -1,48 +1,12 @@
 import "./style.css";
-
-const blackTileColor = "#b58863";
-const whiteTileColor = "#f0d9b5";
-//const highlightColor = "#623b69";
-//const highlightOpacity = 0.85;
-
-const white = "white";
-const black = "black";
-
-const basicBoard: Piece[] = [
-    { pos: { x: 0, y: 0 }, name: "rook", color: white },
-    { pos: { x: 1, y: 0 }, name: "knight", color: white },
-    { pos: { x: 2, y: 0 }, name: "bishop", color: white },
-    { pos: { x: 3, y: 0 }, name: "queen", color: white },
-    { pos: { x: 4, y: 0 }, name: "king", color: white },
-    { pos: { x: 5, y: 0 }, name: "bishop", color: white },
-    { pos: { x: 6, y: 0 }, name: "knight", color: white },
-    { pos: { x: 7, y: 0 }, name: "rook", color: white },
-    { pos: { x: 0, y: 1 }, name: "pawn", color: white },
-    { pos: { x: 1, y: 1 }, name: "pawn", color: white },
-    { pos: { x: 2, y: 1 }, name: "pawn", color: white },
-    { pos: { x: 3, y: 1 }, name: "pawn", color: white },
-    { pos: { x: 4, y: 1 }, name: "pawn", color: white },
-    { pos: { x: 5, y: 1 }, name: "pawn", color: white },
-    { pos: { x: 6, y: 1 }, name: "pawn", color: white },
-    { pos: { x: 7, y: 1 }, name: "pawn", color: white },
-
-    { pos: { x: 0, y: 7 }, name: "rook", color: black },
-    { pos: { x: 1, y: 7 }, name: "knight", color: black },
-    { pos: { x: 2, y: 7 }, name: "bishop", color: black },
-    { pos: { x: 3, y: 7 }, name: "queen", color: black },
-    { pos: { x: 4, y: 7 }, name: "king", color: black },
-    { pos: { x: 5, y: 7 }, name: "bishop", color: black },
-    { pos: { x: 6, y: 7 }, name: "knight", color: black },
-    { pos: { x: 7, y: 7 }, name: "rook", color: black },
-    { pos: { x: 0, y: 6 }, name: "pawn", color: black },
-    { pos: { x: 1, y: 6 }, name: "pawn", color: black },
-    { pos: { x: 2, y: 6 }, name: "pawn", color: black },
-    { pos: { x: 3, y: 6 }, name: "pawn", color: black },
-    { pos: { x: 4, y: 6 }, name: "pawn", color: black },
-    { pos: { x: 5, y: 6 }, name: "pawn", color: black },
-    { pos: { x: 6, y: 6 }, name: "pawn", color: black },
-    { pos: { x: 7, y: 6 }, name: "pawn", color: black },
-];
+import {
+    basicBoard,
+    blackTileColor,
+    highlightColor,
+    whiteTileColor,
+} from "./data";
+import { areVecsEqual, Vec2 } from "./utils";
+import { GameContext, GameObject, getPossibleMoves, Piece, Tile } from "./game";
 
 interface FpsContext {
     reportInterval: number;
@@ -50,25 +14,23 @@ interface FpsContext {
     frames: number;
 }
 
-interface GameContext {
-    mousePos: { x: number; y: number };
+interface MouseContext {
+    pos: Vec2;
     isMouseDown: boolean;
-    fps: FpsContext;
-    canvas: HTMLCanvasElement;
-    painter: CanvasRenderingContext2D;
-    //
-    pieces: Piece[];
-    boardSize: Size;
-    //
-    images: Record<string, HTMLImageElement>;
+    clickOccured: boolean;
+    releaseOccured: boolean;
+    pointerDownPos?: Vec2;
+    pointerUpPos?: Vec2;
 }
 
-type Position = { x: number; y: number };
-
-interface Piece {
-    pos: Position;
-    name: string;
-    color: string;
+interface AppContext {
+    mouse: MouseContext;
+    fps: FpsContext;
+    game: GameContext;
+    //
+    //
+    images: Record<string, HTMLImageElement>;
+    draggedPiece?: Piece;
 }
 
 function handleFpsReporting(ctx: FpsContext, currentTime: DOMHighResTimeStamp) {
@@ -82,70 +44,53 @@ function handleFpsReporting(ctx: FpsContext, currentTime: DOMHighResTimeStamp) {
     ctx.frames++;
 }
 
-function startMouseTracking(ctx: GameContext, canvas: HTMLCanvasElement) {
-    canvas.addEventListener("pointermove", (event: any) => {
+function startMouseTracking(ctx: MouseContext, canvas: HTMLCanvasElement) {
+    function setMousePos(event: PointerEvent) {
         const rect = canvas.getBoundingClientRect();
 
-        ctx.mousePos.x = event.clientX - rect.left;
-        ctx.mousePos.y = event.clientY - rect.top;
-    });
-    canvas.addEventListener("pointerdown", () => {
-        ctx.isMouseDown = true;
-    });
-    canvas.addEventListener("pointerup", () => {
-        ctx.isMouseDown = false;
-    });
-}
-
-type Size = { w: number; h: number };
-
-function drawBoard(ctx: GameContext) {
-    const tileSize = getTileSize(ctx);
-
-    for (let x = 0; x < ctx.boardSize.w; x++) {
-        for (let y = 0; y < ctx.boardSize.h; y++) {
-            const color = ((x + y) & 1) == 0 ? blackTileColor : whiteTileColor;
-            const pos = getRealPos(ctx, { x, y });
-
-            ctx.painter.fillStyle = color;
-            ctx.painter.fillRect(pos.x, pos.y, tileSize.w, tileSize.h);
-        }
+        ctx.pos.x = event.clientX - rect.left;
+        ctx.pos.y = event.clientY - rect.top;
     }
-}
 
-function getTileSize(ctx: GameContext): Size {
-    return {
-        w: ctx.canvas.width / ctx.boardSize.w,
-        h: ctx.canvas.height / ctx.boardSize.h,
-    };
-}
-
-function getRealPos(ctx: GameContext, boardPos: Position): Position {
-    const tileSize = getTileSize(ctx);
-
-    return {
-        x: boardPos.x * tileSize.w,
-        y: ctx.canvas.height - tileSize.h * (boardPos.y + 1),
-    };
-}
-
-function getPieceImage(ctx: GameContext, pieceType: string, color: string) {
-    return ctx.images[`${color}-${pieceType}`];
-}
-
-function drawPieces(ctx: GameContext) {
-    ctx.pieces.forEach((piece) => {
-        const tileSize = getTileSize(ctx);
-        const pos = getRealPos(ctx, piece.pos);
-
-        ctx.painter.drawImage(
-            getPieceImage(ctx, piece.name, piece.color),
-            pos.x,
-            pos.y,
-            tileSize.w,
-            tileSize.h,
-        );
+    canvas.addEventListener("pointerdown", (event) => {
+        setMousePos(event);
+        ctx.clickOccured = true;
+        ctx.isMouseDown = true;
+        ctx.pointerDownPos = { x: ctx.pos.x, y: ctx.pos.y };
     });
+    document.addEventListener("pointermove", (event) => {
+        setMousePos(event);
+    });
+    document.addEventListener("pointerup", (event) => {
+        setMousePos(event);
+        ctx.releaseOccured = true;
+        ctx.isMouseDown = false;
+        ctx.pointerUpPos = { x: ctx.pos.x, y: ctx.pos.y };
+    });
+}
+
+function getTileSize(boardSize: Vec2, canvas: HTMLCanvasElement): Vec2 {
+    return {
+        x: canvas.width / boardSize.x,
+        y: canvas.height / boardSize.y,
+    };
+}
+
+function getRealPos(
+    boardPos: Vec2,
+    boardSize: Vec2,
+    canvas: HTMLCanvasElement,
+): Vec2 {
+    const tileSize = getTileSize(boardSize, canvas);
+
+    return {
+        x: boardPos.x * tileSize.x,
+        y: canvas.height - tileSize.y * (boardPos.y + 1),
+    };
+}
+
+function getPieceImage(ctx: AppContext, pieceType: string, color: string) {
+    return ctx.images[`${color}-${pieceType}`];
 }
 
 function loadImages(): Record<string, HTMLImageElement> {
@@ -172,25 +117,116 @@ function loadImages(): Record<string, HTMLImageElement> {
     };
 }
 
+function isInBounds(pos: Vec2, object: GameObject): boolean {
+    return (
+        pos.x >= object.pos.x &&
+        pos.x < object.pos.x + object.size.x &&
+        pos.y >= object.pos.y &&
+        pos.y < object.pos.y + object.size.y
+    );
+}
+
+function hitTest(clickPos: Vec2, pieces: Piece[]): Piece | undefined {
+    return pieces.find((piece) => isInBounds(clickPos, piece.object!));
+}
+
+function resetEventFlags(ctx: MouseContext) {
+    ctx.clickOccured = false;
+    ctx.releaseOccured = false;
+}
+
 function render(
-    ctx: GameContext,
+    ctx: AppContext,
     canvas: HTMLCanvasElement,
     painter: CanvasRenderingContext2D,
     time: DOMHighResTimeStamp,
-    onRendered: () => void,
 ) {
-    painter.clearRect(0, 0, canvas.width, canvas.height);
-
-    drawBoard(ctx);
-    drawPieces(ctx);
-
-    //draw pointer
-    painter.fillStyle = "red";
-    painter.fillRect(ctx.mousePos.x - 5, ctx.mousePos.y - 5, 10, 10);
-
     handleFpsReporting(ctx.fps, time);
 
-    onRendered();
+    // HANDLE MOUSE EVENTS
+    if (ctx.mouse.clickOccured) {
+        const piece = hitTest(ctx.mouse.pointerDownPos!, ctx.game.pieces);
+        if (piece) {
+            ctx.draggedPiece = piece;
+
+            const possibleMoves = getPossibleMoves(ctx.draggedPiece, ctx.game);
+            possibleMoves.forEach((pos) => {
+                const tile = ctx.game.tiles.find((tile) =>
+                    areVecsEqual(tile.boardPos, pos),
+                );
+                if (tile) {
+                    tile.color = highlightColor;
+                }
+            });
+        }
+    }
+
+    if (ctx.mouse.releaseOccured) {
+        ctx.draggedPiece = undefined;
+
+        // Move pieces to places based on board state
+        ctx.game.pieces.forEach((p) => {
+            const origPos = getRealPos(p.pos, ctx.game.boardSize, canvas);
+            p.object!.pos.x = origPos.x;
+            p.object!.pos.y = origPos.y;
+        });
+
+        // Reset tiles highlight
+        ctx.game.tiles.forEach((tile) => {
+            tile.color = tile.defaultColor;
+            tile.opacity = tile.defaultOpacity;
+        });
+    }
+
+    resetEventFlags(ctx.mouse);
+
+    if (ctx.draggedPiece) {
+        const pos = {
+            x: ctx.mouse.pos.x - ctx.draggedPiece.object!.size.x / 2,
+            y: ctx.mouse.pos.y - ctx.draggedPiece.object!.size.y / 2,
+        };
+
+        ctx.draggedPiece.object!.pos = pos;
+    }
+
+    const tileSize = getTileSize(ctx.game.boardSize, canvas);
+
+    // CLEAR
+    painter.clearRect(0, 0, canvas.width, canvas.height);
+
+    // DRAW BOARD
+    ctx.game.tiles.forEach((tile) => {
+        painter.fillStyle = tile.color;
+        painter.globalAlpha = tile.opacity;
+        painter.fillRect(
+            tile.object.pos.x,
+            tile.object.pos.y,
+            tileSize.x,
+            tileSize.y,
+        );
+        painter.globalAlpha = 1.0;
+    });
+
+    // DRAW PIECES
+    ctx.game.pieces.forEach((piece) => {
+        const o = piece.object!;
+
+        painter.drawImage(
+            getPieceImage(ctx, piece.type, piece.color),
+            o.pos.x,
+            o.pos.y,
+            o.size.x,
+            o.size.y,
+        );
+    });
+
+    //draw pointer
+    //painter.fillStyle = "red";
+    //painter.fillRect(ctx.mousePos.x - 5, ctx.mousePos.y - 5, 10, 10);
+
+    requestAnimationFrame((time: DOMHighResTimeStamp) => {
+        render(ctx, canvas, painter, time);
+    });
 }
 
 function init() {
@@ -200,30 +236,70 @@ function init() {
     canvas.height = 800;
     const painter: CanvasRenderingContext2D = canvas.getContext("2d")!;
 
-    const ctx: GameContext = {
-        mousePos: { x: 0, y: 0 },
-        isMouseDown: false,
+    const boardSize = { x: 8, y: 8 };
+    const tileSize = getTileSize(boardSize, canvas);
+
+    // INIT PIECES
+    const pieces = basicBoard;
+    pieces.forEach((piece) => {
+        const pos = getRealPos(piece.pos, boardSize, canvas);
+        piece.object = {
+            pos,
+            size: tileSize,
+        };
+    });
+
+    // INIT TILES
+    const tiles: Tile[] = [];
+    for (let x = 0; x < boardSize.x; x++) {
+        for (let y = 0; y < boardSize.y; y++) {
+            const color = ((x + y) & 1) == 0 ? blackTileColor : whiteTileColor;
+            const opacity = 1.0;
+            const boardPos = { x, y };
+
+            const pos = getRealPos(boardPos, boardSize, canvas);
+            const object: GameObject = {
+                pos,
+                size: tileSize,
+            };
+
+            tiles.push({
+                boardPos,
+                renderPos: pos,
+                color,
+                defaultColor: color,
+                object,
+                opacity,
+                defaultOpacity: opacity,
+            });
+        }
+    }
+
+    const ctx: AppContext = {
+        mouse: {
+            pos: { x: 0, y: 0 },
+            isMouseDown: false,
+            clickOccured: false,
+            releaseOccured: false,
+        },
         fps: {
             lastTime: 0,
             frames: 0,
             reportInterval: 10_000,
         },
-        canvas,
-        painter,
-        pieces: basicBoard,
-        boardSize: { w: 8, h: 8 },
+        game: {
+            boardSize,
+            pieces,
+            tiles,
+        },
         images: loadImages(),
     };
 
-    const curriedRender = (time: DOMHighResTimeStamp) => {
-        render(ctx, canvas, painter, time, () =>
-            requestAnimationFrame(curriedRender),
-        );
-    };
+    startMouseTracking(ctx.mouse, canvas);
 
-    startMouseTracking(ctx, canvas);
-
-    requestAnimationFrame(curriedRender);
+    requestAnimationFrame((time: DOMHighResTimeStamp) => {
+        render(ctx, canvas, painter, time);
+    });
 }
 
 init();
