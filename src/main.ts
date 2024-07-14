@@ -5,7 +5,6 @@ import { highlightColor, PieceUiObject, Ui } from "./Ui";
 import { createBasicBoard } from "./Board";
 import { Game } from "./Game";
 import { Mouse } from "./Mouse";
-import { Vec2 } from "./Vec2";
 import { convertToBoardPos } from "./utils";
 
 interface AppContext {
@@ -15,7 +14,6 @@ interface AppContext {
     game: Game;
     ui: Ui;
     //
-    dragSourcePos?: Vec2;
     dragPieceUiObject?: PieceUiObject;
 }
 
@@ -32,22 +30,18 @@ function render(
         const mouseEvent = ctx.mouse.eventQueue.shift()!;
 
         if (mouseEvent.type == "ClickOccuredEvent") {
-            const dst = convertToBoardPos(
+            const boardPos = convertToBoardPos(
                 mouseEvent.pos,
                 ctx.game.board.size,
                 canvas,
             );
-            const piece = ctx.game.board.getPieceOn(dst);
-            if (piece) {
-                ctx.dragSourcePos = dst;
+
+            if (ctx.game.board.getPieceOn(boardPos)) {
                 ctx.dragPieceUiObject = ctx.ui.pieces.find((p) =>
-                    p.boardPos.equals(dst),
+                    p.boardPos.equals(boardPos),
                 );
 
-                const possibleMoves = ctx.game.getPossibleMoves(
-                    ctx.dragSourcePos,
-                );
-                possibleMoves.forEach((pos) => {
+                ctx.game.getPossibleMoves(boardPos).forEach((pos) => {
                     const tile = ctx.ui.tiles.find((tile) =>
                         tile.boardPos.equals(pos),
                     );
@@ -68,7 +62,6 @@ function render(
 
                 ctx.game.makeMove(ctx.dragPieceUiObject.boardPos, dst);
 
-                ctx.dragSourcePos = undefined;
                 ctx.dragPieceUiObject = undefined;
             }
 
