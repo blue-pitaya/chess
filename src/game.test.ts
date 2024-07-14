@@ -1,51 +1,50 @@
 import { expect, test } from "vitest";
-import { GameContext, getPossibleMoves, mkPiece } from "./game";
-import { black, white } from "./data";
+import { Game, mkPiece } from "./Game";
+import { Board } from "./Board";
+import { Vec2 } from "./Vec2";
 
 test("knight moves", () => {
-    const piece = mkPiece({ x: 1, y: 1 }, "knight", white);
+    const pos = new Vec2(1, 1);
 
     //R...
     //...b
     //.n..
     //....
-    const ctx: GameContext = {
-        boardSize: { x: 8, y: 8 },
-        pieces: [
-            piece,
-            mkPiece({ x: 0, y: 3 }, "rook", black),
-            mkPiece({ x: 3, y: 2 }, "bishop", white),
-        ],
-    };
+    const game = new Game(
+        new Board(new Vec2(8, 8), [
+            { pos: pos.copy(), piece: mkPiece("knight", "white") },
+            { pos: new Vec2(0, 3), piece: mkPiece("rook", "black") },
+            { pos: new Vec2(3, 2), piece: mkPiece("bishop", "white") },
+        ]),
+    );
 
-    expect(getPossibleMoves(piece, ctx)).toStrictEqual([
-        { x: 0, y: 3 },
-        { x: 2, y: 3 },
-        { x: 3, y: 0 },
+    expect(game.getPossibleMoves(pos)).toStrictEqual([
+        new Vec2(0, 3),
+        new Vec2(2, 3),
+        new Vec2(3, 0),
     ]);
 });
 
 test("bishop moves", () => {
-    const piece = mkPiece({ x: 2, y: 1 }, "bishop", white);
+    const pos = new Vec2(2, 1);
 
     //r...R
     //.....
     //..b..
     //.....
-    const ctx: GameContext = {
-        boardSize: { x: 8, y: 8 },
-        pieces: [
-            piece,
-            mkPiece({ x: 4, y: 3 }, "rook", black),
-            mkPiece({ x: 0, y: 3 }, "rook", white),
-        ],
-    };
+    const game = new Game(
+        new Board(new Vec2(8, 8), [
+            { pos: pos.copy(), piece: mkPiece("bishop", "white") },
+            { pos: new Vec2(4, 3), piece: mkPiece("rook", "black") },
+            { pos: new Vec2(0, 3), piece: mkPiece("rook", "white") },
+        ]),
+    );
 
-    expect(getPossibleMoves(piece, ctx)).toStrictEqual([
-        { x: 1, y: 0 },
-        { x: 3, y: 0 },
-        { x: 1, y: 2 },
-        { x: 3, y: 2 },
-        { x: 4, y: 3 },
+    expect(game.getPossibleMoves(pos)).toStrictEqual([
+        new Vec2(1, 0),
+        new Vec2(3, 0),
+        new Vec2(1, 2),
+        new Vec2(3, 2),
+        new Vec2(4, 3),
     ]);
 });
