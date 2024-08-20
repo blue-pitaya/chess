@@ -1,5 +1,6 @@
 import { Assets } from "./Assets";
-import { Board } from "./Board";
+import { Game } from "./Game";
+import { DomContext } from "./main";
 import { getRealPos, getTileSize } from "./utils";
 import { Vec2 } from "./Vec2";
 
@@ -28,20 +29,20 @@ export class Ui {
     public tiles: TileUiObject[] = [];
     public pieces: PieceUiObject[] = [];
 
-    public reload(board: Board, canvas: HTMLCanvasElement, assets: Assets) {
+    public reload(game: Game, dom: DomContext, assets: Assets) {
         this.pieces = [];
         this.tiles = [];
 
-        const tileSize = getTileSize(board.size, canvas);
+        const tileSize = getTileSize(game.board.size, dom.canvas);
 
         //init tiles
-        for (let x = 0; x < board.size.x; x++) {
-            for (let y = 0; y < board.size.y; y++) {
+        for (let x = 0; x < game.board.size.x; x++) {
+            for (let y = 0; y < game.board.size.y; y++) {
                 const color =
                     ((x + y) & 1) == 0 ? blackTileColor : whiteTileColor;
                 const opacity = 1.0;
                 const boardPos = new Vec2(x, y);
-                const pos = getRealPos(boardPos, board.size, canvas);
+                const pos = getRealPos(boardPos, game.board.size, dom.canvas);
 
                 this.tiles.push({
                     boardPos,
@@ -56,8 +57,8 @@ export class Ui {
         }
 
         // init pieces
-        board.getPiecesWithPos().forEach(({ pos, piece }) => {
-            const renderPos = getRealPos(pos, board.size, canvas);
+        game.board.getPiecesWithPos().forEach(({ pos, piece }) => {
+            const renderPos = getRealPos(pos, game.board.size, dom.canvas);
 
             this.pieces.push({
                 boardPos: pos.copy(),
@@ -66,6 +67,9 @@ export class Ui {
                 image: assets.getPieceImage(piece.type, piece.color),
             });
         });
+
+        //set turn
+        dom.turnSpan.innerHTML = game.turnFor;
     }
 
     public render(canvas: HTMLCanvasElement) {

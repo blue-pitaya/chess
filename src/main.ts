@@ -17,11 +17,7 @@ interface AppContext {
     dragPieceUiObject?: PieceUiObject;
 }
 
-function render(
-    ctx: AppContext,
-    canvas: HTMLCanvasElement,
-    time: DOMHighResTimeStamp,
-) {
+function render(ctx: AppContext, dom: DomContext, time: DOMHighResTimeStamp) {
     ctx.fps.handleFpsReporting(time);
 
     // HANDLE MOUSE EVENTS
@@ -33,7 +29,7 @@ function render(
             const boardPos = convertToBoardPos(
                 mouseEvent.pos,
                 ctx.game.board.size,
-                canvas,
+                dom.canvas,
             );
 
             if (ctx.game.board.getPieceOn(boardPos)) {
@@ -57,7 +53,7 @@ function render(
                 const dst = convertToBoardPos(
                     mouseEvent.pos,
                     ctx.game.board.size,
-                    canvas,
+                    dom.canvas,
                 );
 
                 ctx.game.makeMove(ctx.dragPieceUiObject.boardPos, dst);
@@ -65,7 +61,7 @@ function render(
                 ctx.dragPieceUiObject = undefined;
             }
 
-            ctx.ui.reload(ctx.game.board, canvas, ctx.assets);
+            ctx.ui.reload(ctx.game, dom, ctx.assets);
         }
     }
 
@@ -75,18 +71,23 @@ function render(
         );
     }
 
-    ctx.ui.render(canvas);
+    ctx.ui.render(dom.canvas);
 
     requestAnimationFrame((time: DOMHighResTimeStamp) => {
-        render(ctx, canvas, time);
+        render(ctx, dom, time);
     });
 }
 
+export interface DomContext {
+    canvas: HTMLCanvasElement;
+    turnSpan: HTMLSpanElement;
+}
+
 function init() {
-    const canvas =
-        document.querySelector<HTMLCanvasElement>("[js-id='canvas']")!;
-    canvas.width = 800;
-    canvas.height = 800;
+    const dom: DomContext = {
+        canvas: document.querySelector<HTMLCanvasElement>("[js-id='canvas']")!,
+        turnSpan: document.querySelector<HTMLSpanElement>("[js-id='turn']")!,
+    };
 
     const assets = new Assets();
     const board = createBasicBoard();
@@ -102,12 +103,15 @@ function init() {
         ui,
     };
 
+    dom.canvas.width = 800;
+    dom.canvas.height = 800;
+
     assets.loadImages();
-    ui.reload(board, canvas, assets);
-    mouse.startMouseTracking(canvas);
+    ui.reload(game, dom, assets);
+    mouse.startMouseTracking(dom.canvas);
 
     requestAnimationFrame((time: DOMHighResTimeStamp) => {
-        render(ctx, canvas, time);
+        render(ctx, dom, time);
     });
 }
 

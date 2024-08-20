@@ -3,18 +3,22 @@ import { Vec2 } from "./Vec2";
 
 export type Color = "white" | "black";
 
-export interface Piece {
-    type: string;
-    color: Color;
-    hasMoved: boolean;
-}
+export class Piece {
+    public type: string;
+    public color: Color;
+    public hasMoved: boolean = false;
 
-export function mkPiece(type: string, color: Color): Piece {
-    return {
-        type,
-        color,
-        hasMoved: false,
-    };
+    public constructor(type: string, color: Color) {
+        this.type = type;
+        this.color = color;
+    }
+
+    public copy(): Piece {
+        const p = new Piece(this.type, this.color);
+        p.hasMoved = this.hasMoved;
+
+        return p;
+    }
 }
 
 export class Game {
@@ -57,7 +61,23 @@ export class Game {
             moves = this.getKingMoves(pos, piece);
         }
 
+        // chceck if moves do not put king in check
+        moves.forEach((move) => {});
+
         return moves;
+    }
+
+    private simulateMove(from: Vec2, to: Vec2): Board | undefined {
+        const board = this.board.deepCopy();
+        const piece = board.getPieceOn(from);
+        if (!piece) {
+            return undefined;
+        }
+
+        board.setPieceOn(to, piece);
+        board.setPieceOn(from, undefined);
+
+        return board;
     }
 
     public makeMove(from: Vec2, to: Vec2) {
@@ -66,9 +86,16 @@ export class Game {
             return;
         }
 
+        //if (piece.color != this.turnFor) {
+        //    return;
+        //}
+
         const possibleMoves = this.getPossibleMoves(from);
         if (possibleMoves.find((v) => v.equals(to))) {
             piece.hasMoved = true;
+            this.board.setPieceOn(to, piece);
+            this.board.setPieceOn(from, undefined);
+            this.turnFor = this.turnFor == "white" ? "black" : "white";
         }
     }
 
@@ -119,6 +146,22 @@ export class Game {
                 !this.board.getPieceOn(p) &&
                 this.board.isOnBoard(p)
             ) {
+                moves.push(p);
+            }
+        }
+
+        p = pos.add(new Vec2(-1, yMoveValue));
+        let otherPiece = this.board.getPieceOn(p);
+        if (this.board.isOnBoard(p) && otherPiece) {
+            if (otherPiece.color != piece.color) {
+                moves.push(p);
+            }
+        }
+
+        p = pos.add(new Vec2(1, yMoveValue));
+        otherPiece = this.board.getPieceOn(p);
+        if (this.board.isOnBoard(p) && otherPiece) {
+            if (otherPiece.color != piece.color) {
                 moves.push(p);
             }
         }

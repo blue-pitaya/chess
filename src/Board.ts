@@ -1,4 +1,4 @@
-import { mkPiece, Piece } from "./Game";
+import { Piece } from "./Game";
 import { Vec2 } from "./Vec2";
 
 export interface PieceDefinition {
@@ -10,7 +10,10 @@ export class Board {
     public size: Vec2;
     public data: (Piece | undefined)[] = [];
 
-    public constructor(size: Vec2, pieceDefs: PieceDefinition[]) {
+    public constructor(
+        size: Vec2 = new Vec2(0, 0),
+        pieceDefs: PieceDefinition[] = [],
+    ) {
         this.size = size;
 
         for (let y = 0; y < size.y; y++) {
@@ -60,42 +63,56 @@ export class Board {
 
         return res;
     }
+
+    public deepCopy(): Board {
+        const board = new Board();
+        board.size = this.size.copy();
+        this.data.forEach((x) => {
+            if (x !== undefined) {
+                board.data.push(x.copy());
+            } else {
+                board.data.push(x);
+            }
+        });
+
+        return board;
+    }
 }
 
 export function createBasicBoard(): Board {
     return new Board(new Vec2(8, 8), [
-        { pos: new Vec2(0, 0), piece: mkPiece("rook", "white") },
-        { pos: new Vec2(1, 0), piece: mkPiece("knight", "white") },
-        { pos: new Vec2(2, 0), piece: mkPiece("bishop", "white") },
-        { pos: new Vec2(3, 0), piece: mkPiece("queen", "white") },
-        { pos: new Vec2(4, 0), piece: mkPiece("king", "white") },
-        { pos: new Vec2(5, 0), piece: mkPiece("bishop", "white") },
-        { pos: new Vec2(6, 0), piece: mkPiece("knight", "white") },
-        { pos: new Vec2(7, 0), piece: mkPiece("rook", "white") },
-        { pos: new Vec2(0, 1), piece: mkPiece("pawn", "white") },
-        { pos: new Vec2(1, 1), piece: mkPiece("pawn", "white") },
-        { pos: new Vec2(2, 1), piece: mkPiece("pawn", "white") },
-        { pos: new Vec2(3, 1), piece: mkPiece("pawn", "white") },
-        { pos: new Vec2(4, 1), piece: mkPiece("pawn", "white") },
-        { pos: new Vec2(5, 1), piece: mkPiece("pawn", "white") },
-        { pos: new Vec2(6, 1), piece: mkPiece("pawn", "white") },
-        { pos: new Vec2(7, 1), piece: mkPiece("pawn", "white") },
+        { pos: new Vec2(0, 0), piece: new Piece("rook", "white") },
+        { pos: new Vec2(1, 0), piece: new Piece("knight", "white") },
+        { pos: new Vec2(2, 0), piece: new Piece("bishop", "white") },
+        { pos: new Vec2(3, 0), piece: new Piece("queen", "white") },
+        { pos: new Vec2(4, 0), piece: new Piece("king", "white") },
+        { pos: new Vec2(5, 0), piece: new Piece("bishop", "white") },
+        { pos: new Vec2(6, 0), piece: new Piece("knight", "white") },
+        { pos: new Vec2(7, 0), piece: new Piece("rook", "white") },
+        { pos: new Vec2(0, 1), piece: new Piece("pawn", "white") },
+        { pos: new Vec2(1, 1), piece: new Piece("pawn", "white") },
+        { pos: new Vec2(2, 1), piece: new Piece("pawn", "white") },
+        { pos: new Vec2(3, 1), piece: new Piece("pawn", "white") },
+        { pos: new Vec2(4, 1), piece: new Piece("pawn", "white") },
+        { pos: new Vec2(5, 1), piece: new Piece("pawn", "white") },
+        { pos: new Vec2(6, 1), piece: new Piece("pawn", "white") },
+        { pos: new Vec2(7, 1), piece: new Piece("pawn", "white") },
 
-        { pos: new Vec2(0, 7), piece: mkPiece("rook", "black") },
-        { pos: new Vec2(1, 7), piece: mkPiece("knight", "black") },
-        { pos: new Vec2(2, 7), piece: mkPiece("bishop", "black") },
-        { pos: new Vec2(3, 7), piece: mkPiece("queen", "black") },
-        { pos: new Vec2(4, 7), piece: mkPiece("king", "black") },
-        { pos: new Vec2(5, 7), piece: mkPiece("bishop", "black") },
-        { pos: new Vec2(6, 7), piece: mkPiece("knight", "black") },
-        { pos: new Vec2(7, 7), piece: mkPiece("rook", "black") },
-        { pos: new Vec2(0, 6), piece: mkPiece("pawn", "black") },
-        { pos: new Vec2(1, 6), piece: mkPiece("pawn", "black") },
-        { pos: new Vec2(2, 6), piece: mkPiece("pawn", "black") },
-        { pos: new Vec2(3, 6), piece: mkPiece("pawn", "black") },
-        { pos: new Vec2(4, 6), piece: mkPiece("pawn", "black") },
-        { pos: new Vec2(5, 6), piece: mkPiece("pawn", "black") },
-        { pos: new Vec2(6, 6), piece: mkPiece("pawn", "black") },
-        { pos: new Vec2(7, 6), piece: mkPiece("pawn", "black") },
+        { pos: new Vec2(0, 7), piece: new Piece("rook", "black") },
+        { pos: new Vec2(1, 7), piece: new Piece("knight", "black") },
+        { pos: new Vec2(2, 7), piece: new Piece("bishop", "black") },
+        { pos: new Vec2(3, 7), piece: new Piece("queen", "black") },
+        { pos: new Vec2(4, 7), piece: new Piece("king", "black") },
+        { pos: new Vec2(5, 7), piece: new Piece("bishop", "black") },
+        { pos: new Vec2(6, 7), piece: new Piece("knight", "black") },
+        { pos: new Vec2(7, 7), piece: new Piece("rook", "black") },
+        { pos: new Vec2(0, 6), piece: new Piece("pawn", "black") },
+        { pos: new Vec2(1, 6), piece: new Piece("pawn", "black") },
+        { pos: new Vec2(2, 6), piece: new Piece("pawn", "black") },
+        { pos: new Vec2(3, 6), piece: new Piece("pawn", "black") },
+        { pos: new Vec2(4, 6), piece: new Piece("pawn", "black") },
+        { pos: new Vec2(5, 6), piece: new Piece("pawn", "black") },
+        { pos: new Vec2(6, 6), piece: new Piece("pawn", "black") },
+        { pos: new Vec2(7, 6), piece: new Piece("pawn", "black") },
     ]);
 }

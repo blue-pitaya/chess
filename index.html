@@ -10,7 +10,9 @@
 
 <body>
     <div class="h-full" id="app">
-        <div class="h-full grid items-center justify-center">
+        <div class="h-full flex flex-row gap-5 items-center justify-center">
+            <div class="w-[200px] text-center">Current turn: <br /><span js-id="turn">-</span></div>
+
             <canvas class="bg-black" js-id="canvas">
             </canvas>
         </div>
